@@ -1,7 +1,7 @@
 # synthetic multiple language generator on natural image
 This repository is for synthetic multiple language generator on natural images
 
-This work in based on this work https://github.com/ankush-me/SynthText. 
+This work in based on [this work](https://github.com/ankush-me/SynthText). 
 
 We modified their code, making it:
     * work for different languages
