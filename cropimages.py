@@ -1,6 +1,8 @@
 import h5py as h5
 import numpy as np
 # import matplotlib.pyplot as plt
+import sys
+sys.path.insert(0, '/nfs/isicvlnas01/share/opencv-3.1.0/lib/python2.7/site-packages/')
 import cv2
 import math
 from PIL import Image

@@ -329,8 +329,12 @@ class Colorize(object):
             H : minimum height of a character
         """
         bg_col,fg_col = 0,0
-        fg_col,bg_col = self.font_color.sample_from_seed( seed)
-        # fg_col,bg_col = self.font_color.sample_from_data(bg_arr, seed)
+        if seed is not None:
+            fg_col,bg_col = self.font_color.sample_from_seed( seed)
+            #fg_col,bg_col = self.font_color.sample_from_data(bg_arr, seed)
+        else:
+            #print('sample color from data')
+            fg_col,bg_col = self.font_color.sample_from_data(bg_arr, seed)
         return Layer(alpha=text_arr, color=fg_col), fg_col, bg_col
 
 

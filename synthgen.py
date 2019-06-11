@@ -7,6 +7,8 @@ Main script for synthetic text rendering.
 
 from __future__ import print_function, division
 import copy
+import sys
+sys.path.insert(0, '/nfs/isicvlnas01/share/opencv-3.1.0/lib/python2.7/site-packages/')
 import cv2
 import h5py
 from PIL import Image
@@ -671,7 +673,10 @@ class RendererV3(object):
             reg_range = np.arange(NUM_REP * num_txt_regions) % num_txt_regions
             print( 'totally {} regions of text inserted to {}'.format( m, imname ) )
 
-            max_trial = 5
+            if seed is not None:
+                max_trial = 5
+            else:
+                max_trial = 2
             trial = 0
             best_render = 0
             while True and trial < max_trial:

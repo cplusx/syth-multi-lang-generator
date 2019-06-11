@@ -1,6 +1,8 @@
 import h5py
 import numpy as np
 from PIL import Image
+import sys
+sys.path.insert(0, '/nfs/isicvlnas01/share/opencv-3.1.0/lib/python2.7/site-packages/')
 import cv2
 import io
 import os

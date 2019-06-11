@@ -23,6 +23,7 @@ import wget, tarfile
 import invert_font_size
 import cropimages
 from PIL import Image
+sys.path.insert(0, '/nfs/isicvlnas01/share/opencv-3.1.0/lib/python2.7/site-packages/')
 import cv2
 import argparse
 
@@ -76,7 +77,7 @@ def save_res_images( imgname, lang, res ):
             pt_lt, pt_rt, pt_rb, pt_lb = r.T # left top, right top, right bottom, left bottom
             x1 = min(pt_lt[0], pt_lb[0]); y1 = min(pt_lt[1], pt_rt[1])
             x2 = max(pt_rt[0], pt_rb[0]); y2 = max(pt_lb[1], pt_rb[1])
-            img = cv2.rectangle(img, (x1, y1), (x2, y2), color=(255,0,0), thickness=3)
+            img = cv2.rectangle(img, (x1, y1), (x2, y2), color=(0,0,255), thickness=3)
         outdir = '../debug/temp_images_{}/'.format(lang)
         if not os.path.exists( outdir ):
                 os.makedirs( outdir )
@@ -163,7 +164,8 @@ def main(DB_FNAME, OUT_FILE, lang, mode, viz=False):
                 if len(res) > 0:
                     # non-empty : successful in placing text:
                     add_res_to_db(imname,res,out_db)
-                    save_res_images( imname, lang,  res )
+                    if cnt < 500:
+                        save_res_images( imname, lang,  res )
                 # visualize the output:
                 if viz:
                     if 'q' in raw_input(colorize(Color.RED,'continue? (enter to continue, q to exit): ',True)):

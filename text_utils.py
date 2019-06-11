@@ -288,7 +288,8 @@ class RenderFont(object):
             else:
                 temp_rng = np.random.RandomState(None)
             minloc = np.transpose(np.nonzero(np.ones_like(safemask)))
-            loc = minloc[temp_rng.choice(minloc.shape[0]),:]
+            #loc = minloc[temp_rng.choice(minloc.shape[0]),:]
+            loc = [20, 20]
 #             print(safemask.shape, ba.shape, loc)
             # if safemask[loc[0], loc[1]] == 0:
                 # if first random posisition failed, then find the closest valid point
@@ -300,7 +301,6 @@ class RenderFont(object):
                 if safemask[ loc[0], loc[1] ] == 0:
                     continue
             locs[i] = loc
-
             # update the bounding-boxes:
             bbs[i] = move_bb(bbs[i],loc[::-1])
 
@@ -312,6 +312,35 @@ class RenderFont(object):
                 print( 'loc: {}, text_arr: {}, out_arr: {}'.format(loc, text_arrs[i].shape, out_arr.shape) )
                 import sys
                 sys.exit()
+
+        return out_arr, locs, bbs, order
+    def place_text_original(self, text_arrs, back_arr, bbs):
+        areas = [-np.prod(ta.shape) for ta in text_arrs]
+        order = np.argsort(areas)
+
+        locs = [None for i in range(len(text_arrs))]
+        out_arr = np.zeros_like(back_arr)
+        for i in order:            
+            ba = np.clip(back_arr.copy().astype(np.float), 0, 255)
+            ta = np.clip(text_arrs[i].copy().astype(np.float), 0, 255)
+            ba[ba > 127] = 1e8
+            intersect = ssig.fftconvolve(ba,ta[::-1,::-1],mode='valid')
+            safemask = intersect < 1e8
+
+            if not np.any(safemask): # no collision-free position:
+                #warn("COLLISION!!!")
+                return back_arr,locs[:i],bbs[:i],order[:i]
+
+            minloc = np.transpose(np.nonzero(safemask))
+            loc = minloc[np.random.choice(minloc.shape[0]),:]
+            locs[i] = loc
+
+            # update the bounding-boxes:
+            bbs[i] = move_bb(bbs[i],loc[::-1])
+
+            # blit the text onto the canvas
+            w,h = text_arrs[i].shape
+            out_arr[loc[0]:loc[0]+w,loc[1]:loc[1]+h] += text_arrs[i]
 
         return out_arr, locs, bbs, order
 
@@ -404,14 +433,17 @@ class RenderFont(object):
             # text = ' '*num_ext + text + ' '*num_ext
 
             # render the text:
-            txt_arr,txt,bb = self.render_curved(font, text) # see whether location of text is decided here
+            txt_arr,txt,bb = self.render_curved(font, text) 
             bb = self.bb_xywh2coords(bb)
             # make sure that the text-array is not bigger than mask array:
             if np.any(np.r_[txt_arr.shape[:2]] > np.r_[mask.shape[:2]]):
                 #warn("text-array is bigger than mask")
                 continue
             # position the text within the mask:
-            text_mask,loc,bb, _ = self.place_text([txt_arr], mask, [bb], seed = seed) # see whether location of text is decided here
+            if seed is not None:
+                text_mask,loc,bb, _ = self.place_text([txt_arr], mask, [bb], seed = seed) # see whether location of text is decided here
+            else:
+                text_mask,loc,bb, _ = self.place_text_original([txt_arr], mask, [bb])
             if len(loc) > 0:#successful in placing the text collision-free:
 #                 print(u'Success render {}'.format(text))
                 return text_mask,loc[0],bb[0],text
@@ -512,8 +544,8 @@ class FontState(object):
             rng_fixed = np.random.RandomState(666*seed)
         # random: font
         # depend on seed: font size, underline_ad, strength, char_spacing
-        return {
-            'font': self.fonts[int(rng_random.randint(0, len(self.fonts)))],
+        res =  {
+            'font': self.fonts[int(rng_fixed.randint(0, len(self.fonts)))],
             'size': self.size[1]*rng_fixed.randn() + self.size[0],
             'underline': False, # np.random.rand() < self.underline
             'underline_adjustment': max(2.0, min(-2.0, self.underline_adjustment[1]*rng_fixed.randn() + self.underline_adjustment[0])),
@@ -528,6 +560,9 @@ class FontState(object):
             'random_kerning': False,
             'random_kerning_amount': self.random_kerning_amount,
         }
+        if seed is not None:
+            res['strength'] = (1 - 0.8)*rng_fixed.rand() + 0.8
+        return res
 
     def init_font(self,fs):
         """
